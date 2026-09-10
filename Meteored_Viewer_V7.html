@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f4f8" />
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0f19" />
+<title>Meteored Viewer</title>
+<style>
+:root{
+  --bg:#f2f4f8;
+  --card:#ffffff;
+  --border:#e5e7eb;
+  --text:#0f172a;
+  --text-muted:#64748b;
+  --accent:#4f46e5;
+  --accent-ink:#ffffff;
+  --track:#eef0f5;
+  --warn-bg:#fff7ed;
+  --warn-border:#fdba74;
+  --warn-text:#9a3412;
+  --shadow:0 10px 30px -14px rgba(15,23,42,.18);
+  --radius:20px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0b0f19;
+    --card:#141a26;
+    --border:#232b3d;
+    --text:#e8eaf0;
+    --text-muted:#8891a5;
+    --accent:#6366f1;
+    --accent-ink:#ffffff;
+    --track:#1c2333;
+    --warn-bg:#241708;
+    --warn-border:#7c4a12;
+    --warn-text:#fbbf7a;
+    --shadow:0 10px 30px -14px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Arial,sans-serif;overscroll-behavior-y:none;transition:background .2s ease,color .2s ease}
+button{font-family:inherit}
+.page{max-width:1400px;margin:0 auto;padding:16px;padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right));padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.topbar{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.brand-badge{font-size:30px;line-height:1}
+.topbar h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.01em}
+.topbar p{margin:1px 0 0;font-size:13px;color:var(--text-muted)}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:960px){.grid{grid-template-columns:1fr 380px;align-items:start}}
+.card{min-width:0;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.group-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin:18px 0 8px}
+.group-title:first-child{margin-top:0}
+
+.viewer-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:12px}
+.viewer-info{min-width:0}
+.model-badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--accent);background:color-mix(in srgb, var(--accent) 14%, transparent);padding:2px 8px;border-radius:999px;margin-bottom:6px}
+.viewer-info h2{margin:0;font-size:20px;font-weight:800}
+.viewer-info p{margin:3px 0 0;font-size:13px;color:var(--text-muted);overflow-wrap:anywhere}
+.icon-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;border:1px solid var(--border);background:var(--track);color:var(--text);cursor:pointer;touch-action:manipulation}
+.icon-btn:active{transform:scale(.94)}
+
+.seg{position:relative;display:flex;background:var(--track);border-radius:14px;padding:4px;gap:2px}
+.seg button{position:relative;z-index:1;flex:1;border:none;background:transparent;padding:11px 10px;border-radius:11px;font-weight:700;font-size:14px;color:var(--text-muted);cursor:pointer;touch-action:manipulation;min-height:44px;transition:color .2s ease}
+.seg button.active{color:var(--accent-ink)}
+.seg-thumb{position:absolute;top:4px;bottom:4px;left:0;border-radius:11px;background:var(--accent);transition:transform .28s cubic-bezier(.4,0,.2,1),width .28s cubic-bezier(.4,0,.2,1);z-index:0;box-shadow:0 2px 8px -2px rgba(79,70,229,.5)}
+.seg-row{margin-bottom:14px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.image-frame{position:relative;width:100%;min-width:0;min-height:120px;overflow:hidden;background:var(--track);border-radius:16px;cursor:zoom-in;line-height:0}
+.image-frame img{display:block;width:100%;height:auto}
+.zoom-hint{position:absolute;right:10px;bottom:10px;display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#fff;background:rgba(15,23,42,.55);backdrop-filter:blur(6px);padding:6px 10px;border-radius:999px;pointer-events:none}
+
+.chip-row{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding:2px 2px 8px}
+.day-chip,.shift-chip{scroll-snap-align:start;flex:0 0 auto;border-radius:14px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:700;cursor:pointer;touch-action:manipulation}
+.day-chip{min-width:60px;min-height:56px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.day-chip .dow{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-muted);font-weight:700}
+.day-chip .date{font-size:15px}
+.day-chip.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day-chip.active .dow{color:rgba(255,255,255,.8)}
+.shift-chip{min-width:56px;min-height:44px;padding:10px 14px;font-size:14px}
+.shift-chip.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.shift-chip:disabled{opacity:.35;cursor:not-allowed;background:var(--track);color:var(--text-muted)}
+
+.summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.summary-item{background:var(--track);border-radius:12px;padding:9px 6px;text-align:center}
+.summary-item span{display:block;font-size:10px;color:var(--text-muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em;margin-bottom:2px}
+.summary-item strong{font-size:14px}
+.valid-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:12px 14px;border-radius:14px;background:color-mix(in srgb, var(--accent) 10%, transparent);border:1px solid color-mix(in srgb, var(--accent) 30%, transparent)}
+.valid-banner span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--accent)}
+.valid-banner strong{font-size:14px;text-align:right}
+
+.url-row{display:flex;align-items:center;gap:8px;margin-top:14px;background:var(--track);border:1px solid var(--border);border-radius:12px;padding:10px 10px 10px 12px}
+.url-row code{min-width:0;flex:1;font-size:11.5px;line-height:1.4;color:var(--text-muted);overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.copy-btn{flex:0 0 auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text-muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+.copy-btn.copied{background:var(--accent);border-color:var(--accent);color:#fff}
+.copy-btn svg{width:15px;height:15px}
+
+.warn{display:flex;gap:10px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--warn-bg);border:1px solid var(--warn-border);color:var(--warn-text);font-size:12.5px;line-height:1.45}
+.warn svg{flex:0 0 auto;margin-top:1px}
+
+.lightbox{position:fixed;inset:0;background:rgba(4,6,12,.94);display:flex;align-items:center;justify-content:center;padding:calc(20px + env(safe-area-inset-top)) 16px calc(20px + env(safe-area-inset-bottom));opacity:0;pointer-events:none;transition:opacity .22s ease;z-index:1000}
+.lightbox.open{opacity:1;pointer-events:auto}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:12px}
+.lightbox-close{position:fixed;top:calc(14px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right));width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:1001}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <span class="brand-badge">🌤️</span>
+    <div><h1>Meteored Viewer</h1><p>Modelo GFS · España y Europa</p></div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="viewer-top">
+        <div class="viewer-info">
+          <span class="model-badge" id="modelBadge">GFS</span>
+          <h2 id="imageTitle">España</h2>
+          <p id="imageSubtitle">—</p>
+        </div>
+        <button class="icon-btn" id="openBtn" type="button" aria-label="Abrir en pestaña">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </button>
+      </div>
+      <div class="seg seg-row" id="regionSeg">
+        <button id="tabSpain" type="button">España</button>
+        <button id="tabEurope" type="button">Europa</button>
+        <span class="seg-thumb"></span>
+      </div>
+      <div class="image-frame" id="imageFrame">
+        <img id="mainImage" alt="Imagen Meteored GFS" />
+        <span class="zoom-hint">
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Toca para ampliar
+        </span>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3 class="group-title">Día de previsión</h3>
+      <div id="dayButtons" class="chip-row"></div>
+
+      <h3 class="group-title">Desplazamiento del modelo</h3>
+      <div id="shiftButtons" class="chip-row"></div>
+
+      <div class="two-col">
+        <div>
+          <h3 class="group-title">Ciclo</h3>
+          <div class="seg" id="cycleSeg">
+            <button id="runAuto" type="button">Auto</button>
+            <button id="run00" type="button">00Z</button>
+            <button id="run12" type="button">12Z</button>
+            <span class="seg-thumb"></span>
+          </div>
+        </div>
+        <div>
+          <h3 class="group-title">Protocolo</h3>
+          <div class="seg" id="protoSeg">
+            <button id="httpsBtn" type="button">HTTPS</button>
+            <button id="httpBtn" type="button">HTTP</button>
+            <span class="seg-thumb"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="summary-row">
+        <div class="summary-item"><span>Modelo</span><strong id="modelText">—</strong></div>
+        <div class="summary-item"><span>Región</span><strong id="regionText">—</strong></div>
+        <div class="summary-item"><span>Ciclo</span><strong id="runText">—</strong></div>
+        <div class="summary-item"><span>Dif</span><strong id="difText">0</strong></div>
+      </div>
+      <div class="valid-banner">
+        <span>Válido</span>
+        <strong id="forecastDateText">—</strong>
+      </div>
+
+      <div class="url-row">
+        <code id="urlText"></code>
+        <button class="copy-btn" id="copyBtn" type="button" aria-label="Copiar URL">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+      </div>
+
+      <div class="warn">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Si Meteored todavía no ha publicado el ciclo de 12 UTC aunque ya sean más de las 16:00, fuerza 00 UTC.</span>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <img id="lightboxImg" alt="" />
+</div>
+<button class="lightbox-close" id="lightboxClose" type="button" aria-label="Cerrar" style="display:none">
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+</button>
+
+<script>
+const dayNamesFull=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const dayNamesShort=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
+const shifts=[-24,-12,-6,6,12,24];
+let currentRawModel=6,lastDif=0,protocol="https",activeRegion="ESP0",runMode="auto";
+
+window.addEventListener("resize",updateAllSegThumbs);
+window.addEventListener("orientationchange",updateAllSegThumbs);
+
+function pad2(n){return String(n).padStart(2,"0")}
+function utcDateAt(y,m,d,h){return new Date(Date.UTC(y,m,d,h,0,0,0))}
+function addDaysUTC(d,n){return new Date(d.getTime()+n*86400000)}
+function addHoursUTC(d,h){return new Date(d.getTime()+h*3600000)}
+function padModel(value){const n=Number(value);if(!Number.isFinite(n))return"006";if(n<0)return String(n);if(n<10)return"00"+n;if(n<100)return"0"+n;return String(n)}
+function formatDateShortUTC(date){return pad2(date.getUTCDate())+"/"+pad2(date.getUTCMonth()+1)}
+function formatDateLongUTC(date){const idx=(date.getUTCDay()+6)%7;return dayNamesFull[idx]+" "+pad2(date.getUTCDate())+"/"+pad2(date.getUTCMonth()+1)+"/"+date.getUTCFullYear()+" "+pad2(date.getUTCHours())+":00 UTC"}
+function localTodayAsUtcMidnight(){const now=new Date();return utcDateAt(now.getFullYear(),now.getMonth(),now.getDate(),0)}
+function getInitUtc(){const now=new Date();const y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),h=now.getHours();if(runMode==="00")return utcDateAt(y,m,d,0);if(runMode==="12")return utcDateAt(y,m,d,12);if(h<4)return utcDateAt(y,m,d-1,12);if(h<16)return utcDateAt(y,m,d,0);return utcDateAt(y,m,d,12)}
+function runLabel(){const init=getInitUtc();return pad2(init.getUTCHours())+" UTC"}
+function forecastValidDate(){return addHoursUTC(getInitUtc(),Number(currentRawModel))}
+function rawForTargetDate(targetDateUtc){const init=getInitUtc();let raw=Math.round((targetDateUtc-init)/3600000);if(raw<6)raw=6;return raw}
+function visibleShiftButtons(modelString){const key=String(modelString),n=Number(key);if(key==="006")return[false,false,false,true,true,true];if(key==="012")return[false,false,true,true,true,true];if(key==="018"||key==="024")return[false,true,true,true,true,true];if(n===162)return[true,true,true,true,true,false];if(n===174)return[true,true,true,true,false,false];if(n===180)return[true,true,true,false,true,true];if(n===372)return[true,true,false,false,true,false];if(n===384)return[true,true,false,false,false,false];if(n>180)return[true,true,false,false,true,true];return[true,true,true,true,true,true]}
+function baseUrl(){return protocol+"://services.meteored.com"}
+function regionLabel(){return activeRegion==="EUR0"?"Europa":"España"}
+function currentUrl(){return baseUrl()+"/img/models/gfs/GFS_"+padModel(currentRawModel)+"_"+activeRegion+"_SFC.png"}
+function sameUtcDay(a,b){return a.getUTCFullYear()===b.getUTCFullYear()&&a.getUTCMonth()===b.getUTCMonth()&&a.getUTCDate()===b.getUTCDate()}
+
+function updateSegThumb(seg){
+  const activeBtn=seg.querySelector("button.active");
+  const thumb=seg.querySelector(".seg-thumb");
+  if(!activeBtn||!thumb)return;
+  const segRect=seg.getBoundingClientRect();
+  const btnRect=activeBtn.getBoundingClientRect();
+  thumb.style.width=btnRect.width+"px";
+  thumb.style.transform="translateX("+(btnRect.left-segRect.left)+"px)";
+}
+function updateAllSegThumbs(){["regionSeg","cycleSeg","protoSeg"].forEach(id=>updateSegThumb(document.getElementById(id)))}
+
+function renderDayButtons(){const first=localTodayAsUtcMidnight();const valid=forecastValidDate();for(let i=0;i<14;i++){const date=addDaysUTC(first,i);const btn=document.getElementById("day_"+i);const idx=(date.getUTCDay()+6)%7;btn.innerHTML="<span class='dow'>"+dayNamesShort[idx]+"</span><span class='date'>"+formatDateShortUTC(date)+"</span>";btn.dataset.iso=date.toISOString();btn.classList.toggle("active",sameUtcDay(date,valid))}}
+function syncLastDifWithVisibility(visible){const idx=shifts.indexOf(lastDif);if(idx!==-1&&!visible[idx])lastDif=0}
+
+function render(){
+  const modelString=padModel(currentRawModel),visible=visibleShiftButtons(modelString);
+  syncLastDifWithVisibility(visible);
+  document.getElementById("modelText").innerText=modelString;
+  document.getElementById("regionText").innerText=regionLabel();
+  document.getElementById("runText").innerText=runLabel();
+  document.getElementById("difText").innerText=String(lastDif);
+  document.getElementById("forecastDateText").innerText=formatDateLongUTC(forecastValidDate());
+  document.getElementById("urlText").innerText=currentUrl();
+  document.getElementById("mainImage").src=currentUrl();
+  document.getElementById("imageTitle").innerText=regionLabel();
+  document.getElementById("imageSubtitle").innerText="Válido "+formatDateLongUTC(forecastValidDate());
+  renderDayButtons();
+  shifts.forEach((shift,index)=>{const btn=document.getElementById("shift_"+shift);const isVisible=!!visible[index];btn.disabled=!isVisible;btn.classList.toggle("active",isVisible&&shift===lastDif)});
+  document.getElementById("httpsBtn").classList.toggle("active",protocol==="https");
+  document.getElementById("httpBtn").classList.toggle("active",protocol==="http");
+  document.getElementById("tabSpain").classList.toggle("active",activeRegion==="ESP0");
+  document.getElementById("tabEurope").classList.toggle("active",activeRegion==="EUR0");
+  document.getElementById("runAuto").classList.toggle("active",runMode==="auto");
+  document.getElementById("run00").classList.toggle("active",runMode==="00");
+  document.getElementById("run12").classList.toggle("active",runMode==="12");
+  const lightboxImg=document.getElementById("lightboxImg");
+  if(document.getElementById("lightbox").classList.contains("open"))lightboxImg.src=currentUrl();
+  updateAllSegThumbs();
+}
+
+function openLightbox(){
+  document.getElementById("lightboxImg").src=currentUrl();
+  document.getElementById("lightbox").classList.add("open");
+  document.getElementById("lightboxClose").style.display="flex";
+  document.body.style.overflow="hidden";
+}
+function closeLightbox(){
+  document.getElementById("lightbox").classList.remove("open");
+  document.getElementById("lightboxClose").style.display="none";
+  document.body.style.overflow="";
+}
+
+function buildUi(){
+  const dayButtons=document.getElementById("dayButtons");
+  for(let i=0;i<14;i++){
+    const btn=document.createElement("button");
+    btn.id="day_"+i;btn.type="button";btn.className="day-chip";
+    btn.addEventListener("click",()=>{const targetDate=new Date(btn.dataset.iso);currentRawModel=rawForTargetDate(targetDate);lastDif=0;render()});
+    dayButtons.appendChild(btn);
+  }
+  const shiftButtons=document.getElementById("shiftButtons");
+  shifts.forEach(shift=>{
+    const btn=document.createElement("button");
+    btn.id="shift_"+shift;btn.type="button";btn.className="shift-chip";
+    btn.textContent=shift>0?"+"+shift:shift;
+    btn.addEventListener("click",()=>{const visible=visibleShiftButtons(padModel(currentRawModel));const idx=shifts.indexOf(shift);if(!visible[idx])return;currentRawModel=Number(currentRawModel)+shift;lastDif=shift;render()});
+    shiftButtons.appendChild(btn);
+  });
+  document.getElementById("httpsBtn").addEventListener("click",()=>{protocol="https";render()});
+  document.getElementById("httpBtn").addEventListener("click",()=>{protocol="http";render()});
+  document.getElementById("tabSpain").addEventListener("click",()=>{activeRegion="ESP0";render()});
+  document.getElementById("tabEurope").addEventListener("click",()=>{activeRegion="EUR0";render()});
+  document.getElementById("openBtn").addEventListener("click",()=>window.open(currentUrl(),"_blank"));
+  document.getElementById("runAuto").addEventListener("click",()=>{runMode="auto";render()});
+  document.getElementById("run00").addEventListener("click",()=>{runMode="00";render()});
+  document.getElementById("run12").addEventListener("click",()=>{runMode="12";render()});
+  document.getElementById("imageFrame").addEventListener("click",openLightbox);
+  document.getElementById("lightbox").addEventListener("click",closeLightbox);
+  document.getElementById("lightboxClose").addEventListener("click",closeLightbox);
+  const copyBtn=document.getElementById("copyBtn");
+  copyBtn.addEventListener("click",()=>{
+    navigator.clipboard.writeText(currentUrl()).then(()=>{
+      const original=copyBtn.innerHTML;
+      copyBtn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      copyBtn.classList.add("copied");
+      setTimeout(()=>{copyBtn.innerHTML=original;copyBtn.classList.remove("copied")},1400);
+    });
+  });
+  currentRawModel=rawForTargetDate(localTodayAsUtcMidnight());
+  render();
+}
+buildUi();
+</script>
+</body>
+</html>

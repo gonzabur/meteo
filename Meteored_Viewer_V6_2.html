@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="theme-color" content="#f4f6f8" />
+<title>Meteored Viewer V6.1 - 14 dias</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html{-webkit-text-size-adjust:100%}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#f4f6f8;color:#111827;overscroll-behavior-y:none}.page{max-width:1550px;width:calc(100% - 32px);margin:16px auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);padding-bottom:env(safe-area-inset-bottom)}h1{margin:0 0 6px;font-size:30px}.subtitle{margin:0 0 16px;color:#6b7280;font-size:14px}.grid{display:grid;grid-template-columns:470px 1fr;gap:16px;align-items:start}.card{min-width:0;background:#fff;border:1px solid #d1d5db;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}.section-title{font-size:14px;font-weight:800;margin:0 0 8px}.section-title.spaced{margin-top:18px}.btn-row{display:flex;gap:8px;flex-wrap:wrap}.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}button{padding:10px 12px;border:1px solid #9ca3af;border-radius:8px;background:#f9fafb;color:#111827;cursor:pointer;font-size:14px;min-width:72px;touch-action:manipulation;font-family:inherit}button:hover{background:#eef2ff}button.active{background:#2563eb;color:white;border-color:#2563eb;font-weight:700}button:disabled,button.disabled{opacity:.38!important;cursor:not-allowed!important;background:#f1f5f9!important;color:#94a3b8!important;border-color:#cbd5e1!important;font-weight:400!important;box-shadow:none!important}.day-btn{min-width:0;width:100%;min-height:48px;padding:6px 3px;line-height:1.10;border-radius:7px}.day-btn .dow{display:block;font-weight:800;font-size:12px}.day-btn .date{display:block;font-size:11px;margin-top:3px;opacity:.85}.shift-row{flex-wrap:nowrap}.shift-row button{min-width:58px;padding:10px 8px}.mini{font-size:12px;color:#6b7280;line-height:1.35;overflow-wrap:anywhere}.status{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}.status div{border:1px solid #d1d5db;background:#f9fafb;border-radius:8px;padding:10px}.status small{display:block;color:#6b7280;font-size:11px;margin-bottom:4px}.status strong{font-size:18px}.status .wide{grid-column:1 / -1}.url-box{word-break:break-all;background:#f9fafb;border:1px solid #d1d5db;border-radius:8px;padding:10px;font-size:12px;line-height:1.35}.viewer-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}.tabs{display:flex;gap:8px;flex-wrap:wrap}.tab{min-width:auto;padding:8px 10px;font-size:13px}.image-frame{height:calc(var(--vh,1vh)*100 - 205px);min-height:420px;width:100%;min-width:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#111827;border:1px solid #111827;border-radius:12px}.image-frame img{max-width:100%;max-height:100%;width:auto;height:auto;min-width:0;min-height:0;object-fit:contain;display:block;-webkit-touch-callout:default}.warn{margin-top:10px;padding:10px;border:1px solid #f59e0b;background:#fffbeb;color:#92400e;border-radius:8px;font-size:13px}.footer-note{margin-top:12px;color:#6b7280;font-size:12px}
+@media(max-width:1000px){
+.grid{grid-template-columns:1fr}
+main.card{order:-1}
+.image-frame{height:calc(var(--vh,1vh)*52);min-height:280px}
+.page{width:calc(100% - 20px)}
+h1{font-size:24px}
+}
+@media(max-width:640px){
+.page{margin:10px auto}
+.card{padding:12px;border-radius:10px}
+button{min-height:44px}
+.day-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:66px;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;padding-bottom:6px;margin:0 -4px;padding-left:4px;padding-right:4px}
+.day-btn{scroll-snap-align:start}
+.shift-row{overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.shift-row button{flex:0 0 auto}
+.status{grid-template-columns:1fr}
+.status .wide{grid-column:auto}
+.viewer-head{flex-direction:column;align-items:stretch}
+.tabs{justify-content:stretch}
+.tabs .tab{flex:1 1 auto}
+}
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Meteored Viewer V6.2</h1>
+<p class="subtitle">GFS España y Europa</p>
+<div class="grid"><aside class="card">
+<div class="section-title">Dia de prevision</div><div id="dayButtons" class="day-grid"></div>
+<div class="section-title spaced">Desplazamiento del modelo</div><div id="shiftButtons" class="btn-row shift-row"></div>
+<div class="section-title spaced">Ciclo del modelo</div><div class="btn-row"><button id="runAuto" type="button">Auto</button><button id="run00" type="button">00 UTC</button><button id="run12" type="button">12 UTC</button></div>
+<div class="section-title spaced">Protocolo</div><div class="btn-row"><button id="httpsBtn" type="button">HTTPS</button><button id="httpBtn" type="button">HTTP</button></div>
+<div class="status"><div><small>Modelo</small><strong id="modelText">---</strong></div><div><small>Region</small><strong id="regionText">---</strong></div><div><small>Ciclo estimado</small><strong id="runText">---</strong></div><div><small>Dif aplicado</small><strong id="difText">0</strong></div><div class="wide"><small>Fecha/hora valida estimada</small><strong id="forecastDateText">---</strong></div></div>
+<div class="section-title spaced">URL actual</div><div id="urlText" class="url-box"></div>
+<div class="warn">Si Meteored todavia no ha publicado el ciclo de 12 UTC aunque ya sean mas de las 16:00, fuerza 00 UTC.</div>
+</aside><main class="card"><div class="viewer-head"><div><strong id="imageTitle">GFS España</strong><div class="mini" id="imageSubtitle">services.meteored.com</div></div><div class="tabs"><button id="tabSpain" class="tab" type="button">España</button><button id="tabEurope" class="tab" type="button">Europa</button><button id="openBtn" class="tab" type="button">Abrir en pestana</button></div></div><div class="image-frame"><img id="mainImage" alt="Imagen Meteored GFS" /></div></main></div></div>
+<script>
+const dayNamesFull=["Lunes","Martes","Miercoles","Jueves","Viernes","Sabado","Domingo"];
+const dayNamesShort=["Lun","Mar","Mie","Jue","Vie","Sab","Dom"];
+const shifts=[-24,-12,-6,6,12,24];
+let currentRawModel=6,lastDif=0,protocol="https",activeRegion="ESP0",runMode="auto";
+function setVhVar(){const h=(window.visualViewport&&window.visualViewport.height)||window.innerHeight;document.documentElement.style.setProperty("--vh",(h*0.01)+"px")}
+setVhVar();
+window.addEventListener("resize",setVhVar);
+window.addEventListener("orientationchange",setVhVar);
+if(window.visualViewport){window.visualViewport.addEventListener("resize",setVhVar)}
+function pad2(n){return String(n).padStart(2,"0")}
+function utcDateAt(y,m,d,h){return new Date(Date.UTC(y,m,d,h,0,0,0))}
+function addDaysUTC(d,n){return new Date(d.getTime()+n*86400000)}
+function addHoursUTC(d,h){return new Date(d.getTime()+h*3600000)}
+function padModel(value){const n=Number(value);if(!Number.isFinite(n))return"006";if(n<0)return String(n);if(n<10)return"00"+n;if(n<100)return"0"+n;return String(n)}
+function formatDateShortUTC(date){return pad2(date.getUTCDate())+"/"+pad2(date.getUTCMonth()+1)}
+function formatDateLongUTC(date){const idx=(date.getUTCDay()+6)%7;return dayNamesFull[idx]+" "+pad2(date.getUTCDate())+"/"+pad2(date.getUTCMonth()+1)+"/"+date.getUTCFullYear()+" "+pad2(date.getUTCHours())+":00 UTC"}
+function localTodayAsUtcMidnight(){const now=new Date();return utcDateAt(now.getFullYear(),now.getMonth(),now.getDate(),0)}
+function getInitUtc(){const now=new Date();const y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),h=now.getHours();if(runMode==="00")return utcDateAt(y,m,d,0);if(runMode==="12")return utcDateAt(y,m,d,12);if(h<4)return utcDateAt(y,m,d-1,12);if(h<16)return utcDateAt(y,m,d,0);return utcDateAt(y,m,d,12)}
+function runLabel(){const init=getInitUtc();return pad2(init.getUTCHours())+" UTC"}
+function forecastValidDate(){return addHoursUTC(getInitUtc(),Number(currentRawModel))}
+function rawForTargetDate(targetDateUtc){const init=getInitUtc();let raw=Math.round((targetDateUtc-init)/3600000);if(raw<6)raw=6;return raw}
+function visibleShiftButtons(modelString){const key=String(modelString),n=Number(key);if(key==="006")return[false,false,false,true,true,true];if(key==="012")return[false,false,true,true,true,true];if(key==="018"||key==="024")return[false,true,true,true,true,true];if(n===162)return[true,true,true,true,true,false];if(n===174)return[true,true,true,true,false,false];if(n===180)return[true,true,true,false,true,true];if(n===372)return[true,true,false,false,true,false];if(n===384)return[true,true,false,false,false,false];if(n>180)return[true,true,false,false,true,true];return[true,true,true,true,true,true]}
+function baseUrl(){return protocol+"://services.meteored.com"}
+function regionLabel(){return activeRegion==="EUR0"?"Europa":"España"}
+function currentUrl(){return baseUrl()+"/img/models/gfs/GFS_"+padModel(currentRawModel)+"_"+activeRegion+"_SFC.png"}
+function sameUtcDay(a,b){return a.getUTCFullYear()===b.getUTCFullYear()&&a.getUTCMonth()===b.getUTCMonth()&&a.getUTCDate()===b.getUTCDate()}
+function renderDayButtons(){const first=localTodayAsUtcMidnight();const valid=forecastValidDate();for(let i=0;i<14;i++){const date=addDaysUTC(first,i);const btn=document.getElementById("day_"+i);const idx=(date.getUTCDay()+6)%7;btn.innerHTML="<span class='dow'>"+dayNamesShort[idx]+"</span><span class='date'>"+formatDateShortUTC(date)+"</span>";btn.dataset.iso=date.toISOString();btn.classList.toggle("active",sameUtcDay(date,valid))}}
+function syncLastDifWithVisibility(visible){const idx=shifts.indexOf(lastDif);if(idx!==-1&&!visible[idx])lastDif=0}
+function render(){const modelString=padModel(currentRawModel),visible=visibleShiftButtons(modelString);syncLastDifWithVisibility(visible);document.getElementById("modelText").innerText=modelString;document.getElementById("regionText").innerText=regionLabel();document.getElementById("runText").innerText=runLabel();document.getElementById("difText").innerText=String(lastDif);document.getElementById("forecastDateText").innerText=formatDateLongUTC(forecastValidDate());document.getElementById("urlText").innerText=currentUrl();document.getElementById("mainImage").src=currentUrl();document.getElementById("imageTitle").innerText="GFS "+regionLabel();document.getElementById("imageSubtitle").innerText=currentUrl();renderDayButtons();shifts.forEach((shift,index)=>{const btn=document.getElementById("shift_"+shift);const isVisible=!!visible[index];btn.disabled=!isVisible;btn.classList.toggle("disabled",!isVisible);btn.classList.toggle("active",isVisible&&shift===lastDif)});document.getElementById("httpsBtn").classList.toggle("active",protocol==="https");document.getElementById("httpBtn").classList.toggle("active",protocol==="http");document.getElementById("tabSpain").classList.toggle("active",activeRegion==="ESP0");document.getElementById("tabEurope").classList.toggle("active",activeRegion==="EUR0");document.getElementById("runAuto").classList.toggle("active",runMode==="auto");document.getElementById("run00").classList.toggle("active",runMode==="00");document.getElementById("run12").classList.toggle("active",runMode==="12")}
+function buildUi(){const dayButtons=document.getElementById("dayButtons");for(let i=0;i<14;i++){const btn=document.createElement("button");btn.id="day_"+i;btn.type="button";btn.className="day-btn";btn.addEventListener("click",()=>{const targetDate=new Date(btn.dataset.iso);currentRawModel=rawForTargetDate(targetDate);lastDif=0;render()});dayButtons.appendChild(btn)}const shiftButtons=document.getElementById("shiftButtons");shifts.forEach(shift=>{const btn=document.createElement("button");btn.id="shift_"+shift;btn.type="button";btn.textContent=shift>0?"+"+shift:shift;btn.addEventListener("click",()=>{const visible=visibleShiftButtons(padModel(currentRawModel));const idx=shifts.indexOf(shift);if(!visible[idx])return;currentRawModel=Number(currentRawModel)+shift;lastDif=shift;render()});shiftButtons.appendChild(btn)});document.getElementById("httpsBtn").addEventListener("click",()=>{protocol="https";render()});document.getElementById("httpBtn").addEventListener("click",()=>{protocol="http";render()});document.getElementById("tabSpain").addEventListener("click",()=>{activeRegion="ESP0";render()});document.getElementById("tabEurope").addEventListener("click",()=>{activeRegion="EUR0";render()});document.getElementById("openBtn").addEventListener("click",()=>window.open(currentUrl(),"_blank"));document.getElementById("runAuto").addEventListener("click",()=>{runMode="auto";render()});document.getElementById("run00").addEventListener("click",()=>{runMode="00";render()});document.getElementById("run12").addEventListener("click",()=>{runMode="12";render()});currentRawModel=rawForTargetDate(localTodayAsUtcMidnight());render()}
+buildUi();
+</script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Selector de puntos - España</title>
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#1c1e22;color:#eee;display:flex;height:100vh;overflow:hidden;}
+  #left{flex:1;position:relative;overflow:auto;background:#0a0a0c;cursor:crosshair;}
+  #imgWrap{position:relative;display:inline-block;}
+  #img{display:block;image-rendering:pixelated;}
+  canvas#overlay{position:absolute;top:0;left:0;}
+  #right{width:360px;flex-shrink:0;background:#25282e;border-left:1px solid #3a3d44;padding:16px;overflow-y:auto;}
+  h2{font-size:15px;margin:0 0 10px;color:#fff;}
+  .hint{font-size:12px;color:#9aa0a8;margin-bottom:14px;line-height:1.5;}
+  .point{padding:9px 10px;border-radius:8px;margin-bottom:6px;cursor:pointer;border:1.5px solid transparent;font-size:13px;transition:background .1s;}
+  .point:hover{background:#31353c;}
+  .point.active{border-color:#ff3b30;background:#3a2224;}
+  .point.done{opacity:.55;}
+  .point .name{font-weight:600;color:#fff;}
+  .point .coord{font-size:11px;color:#9aa0a8;}
+  .point .px{font-size:11px;color:#5ec1ff;margin-top:2px;}
+  .zoomRow{display:flex;gap:6px;margin:10px 0;}
+  .zoomRow button{flex:1;padding:8px;background:#3a3d44;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:16px;}
+  .zoomRow button:hover{background:#484c54;}
+  #zoomLbl{align-self:center;font-size:12px;color:#9aa0a8;min-width:44px;text-align:center;}
+  #copyBtn{width:100%;padding:12px;background:#ff3b30;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-top:14px;}
+  #copyBtn:hover{background:#e0342b;}
+  #out{width:100%;height:160px;margin-top:10px;background:#151719;color:#9effa0;font-family:Menlo,monospace;font-size:10px;border-radius:6px;border:1px solid #3a3d44;padding:8px;resize:vertical;}
+  #loupe{position:fixed;width:160px;height:160px;border:2px solid #ff3b30;border-radius:50%;pointer-events:none;overflow:hidden;display:none;box-shadow:0 4px 20px rgba(0,0,0,.6);z-index:50;}
+  #loupeImg{position:absolute;image-rendering:pixelated;}
+  #loupeCross{position:absolute;top:50%;left:50%;width:1px;height:100%;background:rgba(255,59,48,.9);transform:translateX(-50%);}
+  #loupeCross2{position:absolute;left:50%;top:50%;height:1px;width:100%;background:rgba(255,59,48,.9);transform:translateY(-50%);}
+  .skipBtn{font-size:11px;color:#9aa0a8;background:none;border:1px solid #4a4e56;border-radius:5px;padding:2px 6px;cursor:pointer;margin-left:6px;}
+  .skipBtn:hover{color:#fff;border-color:#7a7e86;}
+</style>
+</head>
+<body>
+<div id="left">
+  <div id="imgWrap">
+    <img id="img" src="espana_maxres.png">
+    <canvas id="overlay"></canvas>
+  </div>
+</div>
+<div id="right">
+  <h2>Puntos de control — España</h2>
+  <div class="hint">Haz clic en la lista para seleccionar un punto, luego haz clic exacto sobre ese lugar en la imagen (usa la lupa para precisión). Si un punto no aparece en el mapa, pulsa "omitir".</div>
+  <div class="zoomRow">
+    <button id="zoomOut">−</button>
+    <span id="zoomLbl">100%</span>
+    <button id="zoomIn">+</button>
+  </div>
+  <div id="list"></div>
+  <button id="copyBtn">Copiar JSON</button>
+  <textarea id="out" readonly placeholder="Aquí aparecerá el JSON..."></textarea>
+</div>
+<div id="loupe"><img id="loupeImg"><div id="loupeCross"></div><div id="loupeCross2"></div></div>
+
+<script>
+const POINTS = [
+  {id:"fisterra", name:"Cabo Fisterra (Galicia, NW)",           lat:42.8809, lon:-9.2900},
+  {id:"higuer",   name:"Cabo Higuer (País Vasco, N)",           lat:43.3903, lon:-1.7936},
+  {id:"creus",    name:"Cabo de Creus (Girona, NE, extremo)",   lat:42.3188, lon:3.3169},
+  {id:"formentor",name:"Cabo de Formentor (Mallorca, E)",       lat:39.9578, lon:3.2078},
+  {id:"palos",    name:"Cabo de Palos (Murcia, SE)",            lat:37.6300, lon:-0.6875},
+  {id:"gata",     name:"Cabo de Gata (Almería, S)",             lat:36.7273, lon:-2.1928},
+  {id:"tarifa",   name:"Punta de Tarifa (Cádiz, Estrecho)",     lat:36.0007, lon:-5.6039},
+  {id:"sanvicente",name:"Cabo de San Vicente (Portugal, SW)",   lat:37.0206, lon:-8.9959},
+  {id:"ceuta",    name:"Ceuta (España, costa africana, S)",     lat:35.8894, lon:-5.3213}
+];
+
+let marks = {};
+let activeId = POINTS[0].id;
+let zoom = 1;
+const img = document.getElementById("img");
+const overlay = document.getElementById("overlay");
+const ctx = overlay.getContext("2d");
+const list = document.getElementById("list");
+const loupe = document.getElementById("loupe");
+const loupeImg = document.getElementById("loupeImg");
+
+function renderList(){
+  list.innerHTML = "";
+  POINTS.forEach(p=>{
+    const div = document.createElement("div");
+    div.className = "point" + (p.id===activeId?" active":"") + (marks[p.id]?" done":"");
+    const m = marks[p.id];
+    div.innerHTML = `<div class="name">${p.name}</div>
+      <div class="coord">lat ${p.lat}, lon ${p.lon}</div>
+      <div class="px">${m && !m.skipped ? ("px "+m.px.toFixed(1)+", py "+m.py.toFixed(1)) : (m&&m.skipped?"omitido":"sin marcar")}
+      <span class="skipBtn" data-skip="${p.id}">omitir</span></div>`;
+    div.addEventListener("click",(e)=>{
+      if(e.target.dataset.skip)return;
+      activeId = p.id;
+      renderList();
+    });
+    list.appendChild(div);
+  });
+  list.querySelectorAll("[data-skip]").forEach(btn=>{
+    btn.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      marks[btn.dataset.skip] = {skipped:true};
+      const idx = POINTS.findIndex(p=>p.id===btn.dataset.skip);
+      if(idx>=0 && idx+1<POINTS.length) activeId = POINTS[idx+1].id;
+      renderList(); redraw();
+    });
+  });
+}
+
+function applyZoom(){
+  img.style.width = (img.naturalWidth*zoom)+"px";
+  img.style.height = (img.naturalHeight*zoom)+"px";
+  overlay.width = img.naturalWidth*zoom;
+  overlay.height = img.naturalHeight*zoom;
+  overlay.style.width = overlay.width+"px";
+  overlay.style.height = overlay.height+"px";
+  document.getElementById("zoomLbl").textContent = Math.round(zoom*100)+"%";
+  redraw();
+}
+
+function redraw(){
+  ctx.clearRect(0,0,overlay.width,overlay.height);
+  POINTS.forEach((p,i)=>{
+    const m = marks[p.id];
+    if(!m || m.skipped) return;
+    const x = m.px*zoom, y = m.py*zoom;
+    ctx.strokeStyle = p.id===activeId ? "#ffcc00" : "#ff3b30";
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x-11,y); ctx.lineTo(x+11,y); ctx.moveTo(x,y-11); ctx.lineTo(x,y+11); ctx.stroke();
+    ctx.font = "11px -apple-system,sans-serif";
+    ctx.fillText((i+1).toString(), x+10, y-10);
+  });
+}
+
+img.addEventListener("load",()=>{ applyZoom(); renderList(); });
+if(img.complete && img.naturalWidth) { applyZoom(); renderList(); }
+
+document.getElementById("zoomIn").addEventListener("click",()=>{ zoom=Math.min(zoom*1.5,8); applyZoom(); });
+document.getElementById("zoomOut").addEventListener("click",()=>{ zoom=Math.max(zoom/1.5,0.2); applyZoom(); });
+
+overlay.addEventListener("click",(e)=>{
+  const rect = overlay.getBoundingClientRect();
+  const px = (e.clientX-rect.left)/zoom;
+  const py = (e.clientY-rect.top)/zoom;
+  marks[activeId] = {px,py};
+  const idx = POINTS.findIndex(p=>p.id===activeId);
+  const nextUnmarked = POINTS.find((p,i)=>i>idx && !marks[p.id]);
+  if(nextUnmarked) activeId = nextUnmarked.id;
+  renderList(); redraw();
+});
+
+overlay.addEventListener("mousemove",(e)=>{
+  const zf = 4;
+  loupe.style.display="block";
+  loupe.style.left = (e.clientX-80)+"px";
+  loupe.style.top = (e.clientY-190)+"px";
+  loupeImg.src = img.src;
+  loupeImg.style.width = (img.naturalWidth*zoom*zf)+"px";
+  loupeImg.style.height = (img.naturalHeight*zoom*zf)+"px";
+  const rect = overlay.getBoundingClientRect();
+  const cx = e.clientX-rect.left, cy = e.clientY-rect.top;
+  loupeImg.style.left = (-cx*zf+80)+"px";
+  loupeImg.style.top = (-cy*zf+80)+"px";
+});
+overlay.addEventListener("mouseleave",()=>{ loupe.style.display="none"; });
+
+document.getElementById("copyBtn").addEventListener("click",()=>{
+  const result = POINTS.filter(p=>marks[p.id] && !marks[p.id].skipped).map(p=>({
+    id:p.id, lat:p.lat, lon:p.lon, px:Number(marks[p.id].px.toFixed(2)), py:Number(marks[p.id].py.toFixed(2))
+  }));
+  const text = JSON.stringify(result, null, 2);
+  const out = document.getElementById("out");
+  out.value = text;
+  out.focus();
+  out.select();
+  let copied = false;
+  try{ document.execCommand("copy"); copied = true; }catch(e){}
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).catch(()=>{});
+  }
+  document.getElementById("copyBtn").textContent = copied ? "Copiado ✓ (o Cmd+C sobre el texto)" : "Selecciona el texto y pulsa Cmd+C";
+  setTimeout(()=>{ document.getElementById("copyBtn").textContent = "Copiar JSON"; }, 2500);
+});
+</script>
+</body>
+</html>
