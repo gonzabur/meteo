@@ -273,6 +273,7 @@ button{font-family:inherit}
 const dayNamesFull=["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
 const dayNamesShort=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
 const shifts=[-24,-12,-6,6,12,24];
+const RUN00_READY_UTC=6,RUN12_READY_UTC=18.5;
 let currentRawModel=6,lastDif=0,protocol="https",activeRegion="ESP0",runMode="auto";
 
 // The map images are rendered with real cartographic projections — Mercator for the Spain
@@ -433,7 +434,7 @@ function padModel(value){const n=Number(value);if(!Number.isFinite(n))return"006
 function formatDateShortUTC(date){return pad2(date.getUTCDate())+"/"+pad2(date.getUTCMonth()+1)}
 function formatDateLongUTC(date){const idx=(date.getUTCDay()+6)%7;return dayNamesFull[idx]+" "+pad2(date.getUTCDate())+"/"+pad2(date.getUTCMonth()+1)+"/"+date.getUTCFullYear()+" "+pad2(date.getUTCHours())+":00 UTC"}
 function localTodayAsUtcMidnight(){const now=new Date();return utcDateAt(now.getFullYear(),now.getMonth(),now.getDate(),0)}
-function getInitUtc(){const now=new Date();const y=now.getFullYear(),m=now.getMonth(),d=now.getDate(),h=now.getHours();if(runMode==="00")return utcDateAt(y,m,d,0);if(runMode==="12")return utcDateAt(y,m,d,12);if(h<4)return utcDateAt(y,m,d-1,12);if(h<16)return utcDateAt(y,m,d,0);return utcDateAt(y,m,d,12)}
+function getInitUtc(){const now=new Date();const y=now.getUTCFullYear(),m=now.getUTCMonth(),d=now.getUTCDate(),h=now.getUTCHours()+now.getUTCMinutes()/60;if(runMode==="00")return utcDateAt(y,m,d,0);if(runMode==="12")return utcDateAt(y,m,h<12?d-1:d,12);if(h<RUN00_READY_UTC)return utcDateAt(y,m,d-1,12);if(h<RUN12_READY_UTC)return utcDateAt(y,m,d,0);return utcDateAt(y,m,d,12)}
 function runLabel(){const init=getInitUtc();return pad2(init.getUTCHours())+" UTC"}
 function forecastValidDate(){return addHoursUTC(getInitUtc(),Number(currentRawModel))}
 function rawForTargetDate(targetDateUtc){const init=getInitUtc();let raw=Math.round((targetDateUtc-init)/3600000);if(raw<6)raw=6;return raw}
@@ -470,7 +471,7 @@ function render(){
   document.getElementById("imageTitle").innerText=regionLabel();
   document.getElementById("imageSubtitle").innerText="Válido "+formatDateLongUTC(forecastValidDate());
   renderDayButtons();
-  shifts.forEach((shift,index)=>{const btn=document.getElementById("shift_"+shift);const isVisible=!!visible[index];btn.disabled=!isVisible;btn.classList.toggle("active",isVisible&&shift===lastDif)});
+  shifts.forEach((shift,index)=>{const btn=document.getElementById("shift_"+shift);const isVisible=!!visible[index];btn.disabled=!isVisible});
   document.getElementById("httpsBtn").classList.toggle("active",protocol==="https");
   document.getElementById("httpBtn").classList.toggle("active",protocol==="http");
   document.getElementById("tabSpain").classList.toggle("active",activeRegion==="ESP0");
